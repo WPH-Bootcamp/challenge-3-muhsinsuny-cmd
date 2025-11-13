@@ -16,7 +16,7 @@ const path = require('path');
 // TODO: Definisikan konstanta
 // HINT: DATA_FILE, REMINDER_INTERVAL, DAYS_IN_WEEK
 const DATA_FILE = path.resolve(__dirname, 'habits-data.json');
-const REMINDER_INTERVAL = 10000; // 10 detik
+const REMINDER_INTERVAL = 30000; // 10 detik
 const DAYS_IN_WEEK = 7;
 
 // TODO: Setup readline interface
@@ -173,6 +173,81 @@ class HabitTracker {
           .toFixed(2)}%`
       );
     });
+
+    if (filteredHabits.length === 0) {
+      console.log('Tidak ada kebiasaan.');
+    }
+
+    // this.saveToFile();
+
+    // showMenu();
+  }
+
+  displayHabitsWithWhile() {
+    let i = 0;
+    while (i < this.habits.length) {
+      console.log(`${i + 1}. ${this.habits[i].name}`);
+      i++;
+    }
+  }
+
+  displayHabitsWithFor() {
+    for (let i = 0; i < this.habits.length; i++) {
+      console.log(`${i + 1}. ${this.habits[i].name}`);
+    }
+  }
+
+  displayStats() {
+    userProfile.updateStats(this.habits);
+    console.log('=== Statistics ===');
+    console.log(`Total Habits: ${userProfile.totalHabits}`);
+    console.log(`Completed This Week: ${userProfile.completedThisWeek}`);
+  }
+
+  startReminder() {
+    if (this.reminderIntervalId) return;
+    this.reminderIntervalId = setInterval(() => {
+      this.showReminder();
+    }, REMINDER_INTERVAL);
+  }
+
+  showReminder() {
+    console.log(
+      '\n🔔 Reminder: Jangan lupa untuk menyelesaikan kebiasaanmu hari ini!'
+    );
+  }
+
+  stopReminder() {
+    if (this.reminderIntervalId) {
+      clearInterval(this.reminderIntervalId);
+      this.reminderIntervalId = null;
+    }
+  }
+
+  saveToFile() {
+    const data = this.habits.map((habit) => ({
+      name: habit.name,
+      targetFrequency: habit.targetFrequency,
+      completions: habit.completions,
+    }));
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  }
+
+  loadFromFile() {
+    if (fs.existsSync(DATA_FILE)) {
+      const data = JSON.parse(fs.readFileSync(DATA_FILE));
+      this.habits = data.map((h) => {
+        const habit = new Habit(h.name, h.targetFrequency);
+        habit.completions = h.completions;
+        return habit;
+      });
+    }
+  }
+
+  clearAllData() {
+    this.habits = [];
+    this.saveToFile();
+    console.log('All habit data has been cleared.');
   }
 
   // ============================================
@@ -263,14 +338,8 @@ class HabitTracker {
   }
 
   // TODO: Jalankan main() dengan error handling
-  // (async () => {
-  //   await tracker.main();
-  // })().catch((error) => {
-  //   console.error('An error occurred:', error);
-  //   rl.close();
-  // })
 }
-let tracker = new HabitTracker();
+const tracker = new HabitTracker();
 
 (async () => {
   await tracker.main();
